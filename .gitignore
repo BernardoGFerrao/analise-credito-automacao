@@ -1,0 +1,13 @@
+﻿# Banco gerado pelo dados/criar_banco.py
+dados/*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Editor
+.vscode/
+
+# Windows
+desktop.ini
