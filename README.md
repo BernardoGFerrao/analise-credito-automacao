@@ -91,6 +91,7 @@ O robô executa as tarefas da raia **Automação** do TO-BE. As regras de negóc
 erDiagram
     ASSOCIADO ||--o{ PROPOSTA : solicita
     PROPOSTA ||--o{ CONSULTA_CREDITO : possui
+    PROPOSTA ||--o{ LOG_ETAPA : registra
 
     ASSOCIADO {
         int id PK
@@ -109,6 +110,7 @@ erDiagram
         text alcada
         text status
         text motivo_reprovacao
+        text etapa_atual
     }
     CONSULTA_CREDITO {
         int id PK
@@ -117,11 +119,22 @@ erDiagram
         real parcelas_mensais_scr
         text origem
     }
+    LOG_ETAPA {
+        int id PK
+        int proposta_id FK
+        text etapa
+        text resultado
+        text detalhe
+        text executado_por
+        text data_hora
+    }
 ```
 
 - Regras de validação ficam no próprio banco (`CHECK`, `NOT NULL`, `UNIQUE`, chaves estrangeiras).
 - `consulta_credito.origem` distingue a consulta **automática** da **manual** (fallback do backoffice).
 - `proposta.alcada` vazia (`NULL`) indica uma proposta reprovada automaticamente **antes** da etapa de alçada.
+- `proposta.status` responde **qual o resultado**; `proposta.etapa_atual` responde **onde a proposta está no processo** (a raia do TO-BE).
+- `log_etapa` registra cada etapa executada, com resultado, detalhe, responsável (robô ou pessoa) e data/hora.
 
 Exemplos de consultas de indicadores (taxa de aprovação, volume aprovado, uso do backoffice) estão em [`dados/consultas.sql`](dados/consultas.sql).
 
@@ -188,6 +201,7 @@ python robo/analise_previa.py
 │   ├── cliente_api.py     Consulta à API com novas tentativas e fallback
 │   ├── ler_propostas.py   Leitura das propostas pendentes
 │   ├── regras.py          Regras de negócio (funções puras)
+│   ├── repositorio.py     Gravação das decisões e do log no banco
 │   └── test_regras.py     Testes das regras
 └── requirements.txt       Dependências (Flask, Requests)
 ```
@@ -205,6 +219,9 @@ python robo/analise_previa.py
 - **Uma resposta inválida nunca derruba o robô:** qualquer falha na consulta vira um encaminhamento ao backoffice, e o robô segue para a próxima proposta.
 - **Humano no circuito:** a automação só decide sozinha quando a regra é clara. Casos ambíguos, como um CPF não encontrado no birô, vão para uma pessoa.
 - **Configuração fora do código:** endereço, porta e taxa de falha vêm de variáveis de ambiente.
+- **Transação por proposta:** a consulta, a decisão e os logs de uma proposta são gravados juntos, ou nada é gravado. A chamada à API acontece antes, fora da transação, para não bloquear o banco.
+- **Robô idempotente:** ele só processa propostas na etapa `ANALISE_PREVIA`. Rodar de novo não refaz o trabalho já feito.
+- **Consultas SQL parametrizadas:** os valores nunca são colados no texto do SQL, o que evita SQL injection.
 
 ---
 
@@ -215,7 +232,8 @@ python robo/analise_previa.py
 - [x] Leitura das propostas pendentes
 - [x] Regras de negócio com testes
 - [x] Consulta a uma API simulada, com novas tentativas e fallback para o backoffice
-- [ ] Registro de log por etapa (rastreabilidade e SLA)
+- [x] Gravação das decisões e log por etapa (rastreabilidade)
+- [ ] Decisão do gerente/comitê e notificação do associado
 - [ ] Orquestração com Power Automate Desktop
 - [ ] Painel de indicadores
 
