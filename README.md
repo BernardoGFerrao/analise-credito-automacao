@@ -9,6 +9,8 @@ Projeto de estudo que simula, do levantamento de requisitos até o código, a au
 
 O objetivo é praticar o ciclo completo de uma equipe de automação de processos: **entender o processo atual, redesenhá-lo, modelar os dados e automatizar as etapas que não precisam de julgamento humano**.
 
+> ⚠️ Todos os dados, nomes, CPFs e regras de crédito deste repositório são **fictícios** e foram criados apenas para estudo.
+
 ---
 
 ## Sumário
@@ -72,7 +74,7 @@ Modelado no **Bizagi Modeler** em BPMN 2.0. Destaques: o retrabalho na conferên
 flowchart LR
     F["Formulário digital"] --> DB[("Banco SQLite")]
     DB --> R["Robô de análise prévia (Python)"]
-    R -. planejado .-> API["API de restritivos / SCR (simulada)"]
+    R --> API["API de restritivos / SCR (simulada)"]
     R --> REG["Regras de negócio"]
     REG --> DB
     PAD["Power Automate Desktop"] -. planejado .-> R
@@ -141,34 +143,53 @@ Implementadas em [`robo/regras.py`](robo/regras.py) e cobertas por testes em [`r
 
 ## Como executar
 
-Requisitos: **Python 3.13+** (sem bibliotecas externas até o momento).
+Requisitos: **Python 3.13+**.
 
 ```bash
-# 1. Criar o banco com os dados fictícios
+# 1. Criar e ativar o ambiente virtual (Windows / PowerShell)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+# 2. Criar o banco com os dados fictícios
 python dados/criar_banco.py
 
-# 2. Rodar os testes das regras de negócio
+# 3. Rodar os testes das regras de negócio
 python robo/test_regras.py
 
-# 3. Listar as propostas que aguardam a análise prévia
-python robo/ler_propostas.py
+# 4. Terminal 1: iniciar a API simulada
+python api_simulada/servidor.py
+
+# 5. Terminal 2 (com o ambiente ativado): rodar o robô
+python robo/analise_previa.py
 ```
+
+| Variável de ambiente | Padrão | Para que serve |
+|---|---|---|
+| `TAXA_FALHA` | `0.3` | Chance de a API simulada falhar (0 a 1) |
+| `API_PORTA` | `5050` | Porta da API simulada |
+| `URL_API_CREDITO` | `http://127.0.0.1:5050/consultas` | Endereço usado pelo robô |
 
 ---
 
 ## Estrutura do projeto
 
 ```
+├── api_simulada/
+│   └── servidor.py        API simulada de restritivos/SCR (com falhas aleatórias)
 ├── bpmn/                  Diagramas AS-IS e TO-BE (Bizagi + PNG)
 ├── dados/
 │   ├── schema.sql         Estrutura do banco
 │   ├── seed.sql           Dados fictícios
 │   ├── criar_banco.py     Recria o banco a partir dos scripts
 │   └── consultas.sql      Consultas de indicadores
-└── robo/
-    ├── ler_propostas.py   Leitura das propostas pendentes
-    ├── regras.py          Regras de negócio (funções puras)
-    └── test_regras.py     Testes das regras
+├── robo/
+│   ├── analise_previa.py  Robô: executa a raia Automação do TO-BE
+│   ├── cliente_api.py     Consulta à API com novas tentativas e fallback
+│   ├── ler_propostas.py   Leitura das propostas pendentes
+│   ├── regras.py          Regras de negócio (funções puras)
+│   └── test_regras.py     Testes das regras
+└── requirements.txt       Dependências (Flask, Requests)
 ```
 
 ---
@@ -180,6 +201,10 @@ python robo/ler_propostas.py
 - **Timer de SLA não interruptivo:** estourar o prazo avisa o coordenador, mas não cancela a análise do gerente.
 - **O banco não é versionado:** o repositório guarda os scripts que o criam (`schema.sql` e `seed.sql`), e qualquer pessoa recria o banco com um comando.
 - **Regras em funções puras:** a política de crédito fica num único arquivo, com os limites em constantes, e pode ser testada sem banco nem API.
+- **Novas tentativas só para falhas temporárias:** erros de rede e 5xx geram até 3 tentativas, com espera crescente (backoff). Erros 4xx vão direto ao backoffice, porque repetir não resolve.
+- **Uma resposta inválida nunca derruba o robô:** qualquer falha na consulta vira um encaminhamento ao backoffice, e o robô segue para a próxima proposta.
+- **Humano no circuito:** a automação só decide sozinha quando a regra é clara. Casos ambíguos, como um CPF não encontrado no birô, vão para uma pessoa.
+- **Configuração fora do código:** endereço, porta e taxa de falha vêm de variáveis de ambiente.
 
 ---
 
@@ -189,7 +214,7 @@ python robo/ler_propostas.py
 - [x] Banco de dados e consultas de indicadores
 - [x] Leitura das propostas pendentes
 - [x] Regras de negócio com testes
-- [ ] Consulta a uma API simulada, com novas tentativas e fallback para o backoffice
+- [x] Consulta a uma API simulada, com novas tentativas e fallback para o backoffice
 - [ ] Registro de log por etapa (rastreabilidade e SLA)
 - [ ] Orquestração com Power Automate Desktop
 - [ ] Painel de indicadores
