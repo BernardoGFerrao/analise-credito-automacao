@@ -1,7 +1,7 @@
 """
 Robô de análise prévia de crédito.
-Parte 3: executa a raia "Automação" do TO-BE para cada proposta pendente
-(ainda SEM gravar no banco: isso vem na Parte 4).
+Executa a raia "Automação" do TO-BE para cada proposta pendente
+e grava as decisões e o log no banco.
 
 Uso: python robo/analise_previa.py   (com a API simulada rodando)
 """
@@ -15,16 +15,27 @@ from regras import (
     calcular_parcela,
     definir_alcada,
 )
+from repositorio import (
+    encaminhar_alcada,
+    encaminhar_backoffice,
+    registrar_consulta,
+    registrar_log,
+    reprovar,
+)
 
 
-def analisar(proposta):
-    """Aplica as etapas automáticas a uma proposta e mostra a decisão."""
-    print(f"\nProposta {proposta['id']} - {proposta['nome']} (R$ {proposta['valor']:.2f})")
+def analisar(conexao, proposta):
+    """Aplica as etapas automáticas a uma proposta e grava o resultado."""
+    proposta_id = proposta["id"]
+    print(f"\nProposta {proposta_id} - {proposta['nome']} (R$ {proposta['valor']:.2f})")
 
-    # ⚙️ Consultar restritivos/SCR  +  (⚡) Falha na consulta
+    # ⚙️ Consultar restritivos/SCR  (FORA da transação: chamada de rede pode demorar)
     try:
         consulta = consultar_credito(proposta["cpf"])
     except FalhaNaConsulta as erro:
+        # (⚡) Falha na consulta → backoffice
+        with conexao:
+            encaminhar_backoffice(conexao, proposta_id, str(erro))
         print(f"  ⚡ {erro} → encaminhada ao BACKOFFICE")
         return
 
@@ -33,16 +44,23 @@ def analisar(proposta):
     comprometimento = calcular_comprometimento(
         proposta["renda_mensal"], consulta["parcelas_mensais_scr"], parcela
     )
-    print(f"  Comprometimento: {comprometimento:.1f}%")
-
-    # ◇ Dentro da política de crédito?
     dentro_da_politica, motivos = avaliar_politica(consulta["tem_restritivo"], comprometimento)
-    if not dentro_da_politica:
-        print(f"  ✖ REPROVADA automaticamente: {'; '.join(motivos)}")
-        return
 
-    # 📋 Definir alçada
-    print(f"  ✔ Dentro da política → alçada: {definir_alcada(proposta['valor'])}")
+    # Grava tudo de uma vez: ou tudo, ou nada (transação)
+    with conexao:
+        registrar_consulta(conexao, proposta_id, consulta)
+        registrar_log(conexao, proposta_id, "CALCULO_COMPROMETIMENTO", "OK", f"{comprometimento:.1f}%")
+
+        # ◇ Dentro da política de crédito?
+        if not dentro_da_politica:
+            reprovar(conexao, proposta_id, motivos)
+            print(f"  ✖ REPROVADA automaticamente: {'; '.join(motivos)}")
+            return
+
+        # 📋 Definir alçada
+        alcada = definir_alcada(proposta["valor"])
+        encaminhar_alcada(conexao, proposta_id, alcada)
+        print(f"  ✔ Comprometimento {comprometimento:.1f}% → encaminhada para {alcada}")
 
 
 def main():
@@ -51,14 +69,14 @@ def main():
 
     conexao = sqlite3.connect(CAMINHO_BANCO)
     conexao.row_factory = sqlite3.Row
+    conexao.execute("PRAGMA foreign_keys = ON")  # o SQLite só valida as FKs se pedirmos
     try:
         propostas = buscar_propostas_pendentes(conexao)
+        print(f"{len(propostas)} proposta(s) para analisar")
+        for proposta in propostas:
+            analisar(conexao, proposta)
     finally:
         conexao.close()
-
-    print(f"{len(propostas)} proposta(s) para analisar")
-    for proposta in propostas:
-        analisar(proposta)
 
 
 if __name__ == "__main__":

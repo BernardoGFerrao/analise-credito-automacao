@@ -8,16 +8,14 @@ from pathlib import Path
 # Caminho do banco: sobe da pasta "robo" para a pasta do projeto e entra em "dados"
 CAMINHO_BANCO = Path(__file__).parent.parent / "dados" / "credito.db"
 
-# Proposta pendente = em análise e ainda sem consulta de crédito registrada
+# Proposta pendente = está na etapa de análise prévia (a raia Automação do TO-BE)
 SQL_PENDENTES = """
-    SELECT p.id, a.nome, a.cpf, a.situacao, a.renda_mensal, p.valor, p.prazo_meses    FROM proposta p
-    JOIN associado a             ON a.id = p.associado_id
-    LEFT JOIN consulta_credito c ON c.proposta_id = p.id
-    WHERE p.status = 'EM_ANALISE'
-      AND c.id IS NULL
+    SELECT p.id, a.nome, a.cpf, a.situacao, a.renda_mensal, p.valor, p.prazo_meses
+    FROM proposta p
+    JOIN associado a ON a.id = p.associado_id
+    WHERE p.etapa_atual = 'ANALISE_PREVIA'
     ORDER BY p.data_solicitacao
 """
-
 
 def buscar_propostas_pendentes(conexao):
     """Retorna a lista de propostas que o robô ainda precisa analisar."""
