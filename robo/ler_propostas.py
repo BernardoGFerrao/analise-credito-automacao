@@ -10,8 +10,7 @@ CAMINHO_BANCO = Path(__file__).parent.parent / "dados" / "credito.db"
 
 # Proposta pendente = em análise e ainda sem consulta de crédito registrada
 SQL_PENDENTES = """
-    SELECT p.id, a.nome, a.situacao, a.renda_mensal, p.valor, p.prazo_meses, p.valor / p.prazo_meses as 'parcela_simples'
-    FROM proposta p
+    SELECT p.id, a.nome, a.cpf, a.situacao, a.renda_mensal, p.valor, p.prazo_meses    FROM proposta p
     JOIN associado a             ON a.id = p.associado_id
     LEFT JOIN consulta_credito c ON c.proposta_id = p.id
     WHERE p.status = 'EM_ANALISE'
