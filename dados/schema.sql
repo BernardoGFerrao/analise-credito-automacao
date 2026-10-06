@@ -20,6 +20,8 @@ CREATE TABLE proposta (
     alcada            TEXT    CHECK (alcada IN ('GERENTE', 'COMITE')),
     status            TEXT    NOT NULL DEFAULT 'EM_ANALISE'
                               CHECK (status IN ('EM_ANALISE', 'APROVADA', 'REPROVADA')),
+    etapa_atual       TEXT    NOT NULL DEFAULT 'ANALISE_PREVIA'
+                              CHECK (etapa_atual IN ('ANALISE_PREVIA', 'BACKOFFICE', 'GERENTE', 'COMITE', 'FINALIZADA')),
     motivo_reprovacao TEXT
 );
 
@@ -30,4 +32,16 @@ CREATE TABLE consulta_credito (
     parcelas_mensais_scr REAL    NOT NULL,
     origem               TEXT    NOT NULL CHECK (origem IN ('AUTOMATICA', 'MANUAL')),
     data_consulta        TEXT    NOT NULL
+);
+
+
+-- Registro de cada etapa executada (rastreabilidade - R9)
+CREATE TABLE log_etapa (
+    id            INTEGER PRIMARY KEY,
+    proposta_id   INTEGER NOT NULL REFERENCES proposta(id),
+    etapa         TEXT    NOT NULL,
+    resultado     TEXT    NOT NULL,
+    detalhe       TEXT,
+    executado_por TEXT    NOT NULL,
+    data_hora     TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
