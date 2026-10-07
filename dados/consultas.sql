@@ -36,3 +36,13 @@ SELECT COUNT(*) AS decididas,
        ROUND(SUM(CASE WHEN status = 'APROVADA' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS taxa_aprovacao
 FROM proposta
 WHERE status <> 'EM_ANALISE';
+
+-- Fila do backoffice: propostas em que a consulta automática falhou, com o motivo
+SELECT a.nome, p.valor, l.detalhe AS motivo
+FROM proposta p
+JOIN associado a ON a.id = p.associado_id
+JOIN log_etapa l ON l.proposta_id = p.id
+WHERE p.etapa_atual = 'BACKOFFICE'
+  AND l.etapa = 'CONSULTA_CREDITO'
+  AND l.resultado = 'FALHA';
+
