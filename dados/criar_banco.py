@@ -11,8 +11,13 @@ CAMINHO_BANCO = PASTA / "credito.db"
 
 def main():
     if CAMINHO_BANCO.exists():
-        CAMINHO_BANCO.unlink()  # apaga o banco antigo para começar do zero
-
+        try:
+            CAMINHO_BANCO.unlink()  # apaga o banco antigo para começar do zero
+        except PermissionError:
+            raise SystemExit(
+                "O banco está aberto em outro programa (ex.: DB Browser). "
+                "Feche-o e rode de novo."
+            )
     conexao = sqlite3.connect(CAMINHO_BANCO)
     try:
         conexao.executescript((PASTA / "schema.sql").read_text(encoding="utf-8"))
