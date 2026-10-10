@@ -1,0 +1,8 @@
+@@CustomName: 'PastaProjeto'
+SET PastaProjeto TO $'''C:\\Users\\be-8f\\OneDrive\\Projetos\\SicrediProjeto'''
+Scripting.RunDOSCommand.RunDOSCommandWithCodePage DOSCommandOrApplication: $'''\"%PastaProjeto%\\.venv\\Scripts\\python.exe\" -X utf8 robo\\analise_previa.py''' Encoding: System.Encoding.utf_8 WorkingDirectory: PastaProjeto StandardOutput=> CommandOutput StandardError=> CommandErrorOutput ExitCode=> CommandExitCode
+IF CommandExitCode = 0 THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Análise prévia''' Message: $'''Robô executado com sucesso.''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False ButtonPressed=> ButtonPressed
+ELSE
+    Display.ShowMessageDialog.ShowMessage Title: $'''ALERTA - Análise prévia''' Message: $'''O robô terminou com erro (código %CommandExitCode%). Verifique logs\\robo.log. Saída: %CommandErrorOutput%''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False ButtonPressed=> ButtonPressed
+END
