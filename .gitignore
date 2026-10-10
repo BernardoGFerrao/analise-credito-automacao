@@ -11,3 +11,7 @@ __pycache__/
 
 # Windows
 desktop.ini
+
+
+# Logs técnicos do robô
+logs/
