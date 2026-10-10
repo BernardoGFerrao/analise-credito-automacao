@@ -77,11 +77,17 @@ flowchart LR
     R --> API["API de restritivos / SCR (simulada)"]
     R --> REG["Regras de negócio"]
     REG --> DB
-    PAD["Power Automate Desktop"] -. planejado .-> R
+    PAD["Power Automate Desktop"] -- "executa e lê o código de saída" --> R
     DB --> G["Gerente / Comitê"]
 ```
 
 O robô executa as tarefas da raia **Automação** do TO-BE. As regras de negócio ficam isoladas em funções puras, sem acesso a banco ou API, para que possam ser testadas separadamente.
+
+### Orquestração com Power Automate Desktop
+
+![Fluxo no Power Automate Desktop](orquestracao/fluxo_pad.png)
+
+O fluxo executa o robô com o Python do ambiente virtual e decide pelo **código de saída**: `0` exibe a confirmação de sucesso; `1` exibe um alerta com o log da execução. O fluxo em texto está em [`orquestracao/analise_previa_pad.txt`](orquestracao/analise_previa_pad.txt) e pode ser colado no designer do PAD para recriá-lo.
 
 ---
 
@@ -196,6 +202,9 @@ python robo/analise_previa.py
 │   ├── seed.sql           Dados fictícios
 │   ├── criar_banco.py     Recria o banco a partir dos scripts
 │   └── consultas.sql      Consultas de indicadores
+├── orquestracao/
+│   ├── analise_previa_pad.txt  Fluxo do Power Automate Desktop (texto)
+│   └── fluxo_pad.png           Print do fluxo
 ├── robo/
 │   ├── analise_previa.py  Robô: executa a raia Automação do TO-BE
 │   ├── cliente_api.py     Consulta à API com novas tentativas e fallback
@@ -222,6 +231,9 @@ python robo/analise_previa.py
 - **Transação por proposta:** a consulta, a decisão e os logs de uma proposta são gravados juntos, ou nada é gravado. A chamada à API acontece antes, fora da transação, para não bloquear o banco.
 - **Robô idempotente:** ele só processa propostas na etapa `ANALISE_PREVIA`. Rodar de novo não refaz o trabalho já feito.
 - **Consultas SQL parametrizadas:** os valores nunca são colados no texto do SQL, o que evita SQL injection.
+- **Erro em uma proposta não para o robô:** erros inesperados são registrados com o traceback, a proposta volta para a fila (graças à transação) e o robô segue para a próxima.
+- **Dois tipos de log:** `log_etapa` (no banco) responde perguntas de negócio e auditoria; `logs/robo.log` (arquivo) serve para monitorar e investigar a execução.
+- **Código de saída:** `0` quando tudo deu certo, `1` quando houve erro inesperado. Falhas previstas, como o encaminhamento ao backoffice, não são erro do robô. É o código que permite ao orquestrador decidir o que fazer.
 
 ---
 
@@ -234,7 +246,8 @@ python robo/analise_previa.py
 - [x] Consulta a uma API simulada, com novas tentativas e fallback para o backoffice
 - [x] Gravação das decisões e log por etapa (rastreabilidade)
 - [ ] Decisão do gerente/comitê e notificação do associado
-- [ ] Orquestração com Power Automate Desktop
+- [x] Logs técnicos e isolamento de erros por proposta
+- [x] Orquestração com Power Automate Desktop: execução do robô e alerta de erro
 - [ ] Painel de indicadores
 
 ---
