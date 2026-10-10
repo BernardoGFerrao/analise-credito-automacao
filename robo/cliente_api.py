@@ -2,9 +2,13 @@
 Cliente da API de consulta de crédito.
 Tarefa de serviço "Consultar restritivos/SCR" + evento de erro de borda.
 """
+import logging
+import os
 import time
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 URL_API = "http://127.0.0.1:5050/consultas"
 TENTATIVAS = 3
@@ -22,7 +26,7 @@ def consultar_credito(cpf):
         try:
             resposta = requests.post(URL_API, json={"cpf": cpf}, timeout=TIMEOUT_SEGUNDOS)
         except requests.RequestException as erro:
-            print(f"  Tentativa {tentativa}: erro de conexão ({type(erro).__name__})")
+            logger.warning("Tentativa %d: erro de conexão (%s)", tentativa, type(erro).__name__)
         else:
             if resposta.status_code == 200:
                 return resposta.json()
@@ -33,8 +37,7 @@ def consultar_credito(cpf):
                     f"Pedido recusado ({resposta.status_code}): {resposta.json().get('erro')}"
                 )
 
-            print(f"  Tentativa {tentativa}: serviço respondeu {resposta.status_code}")
-
+            logger.warning("Tentativa %d: serviço respondeu %d", tentativa, resposta.status_code)
         if tentativa < TENTATIVAS:
             time.sleep(ESPERA_SEGUNDOS * tentativa)  # espera cada vez maior
 

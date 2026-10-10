@@ -4,8 +4,12 @@ Executa a raia "Automação" do TO-BE para cada proposta pendente
 e grava as decisões e o log no banco.
 
 Uso: python robo/analise_previa.py   (com a API simulada rodando)
+Código de saída: 0 = tudo certo; 1 = alguma proposta teve erro inesperado.
 """
+import logging
 import sqlite3
+import sys
+from pathlib import Path
 
 from cliente_api import FalhaNaConsulta, consultar_credito
 from ler_propostas import CAMINHO_BANCO, buscar_propostas_pendentes
@@ -23,11 +27,27 @@ from repositorio import (
     reprovar,
 )
 
+PASTA_LOGS = Path(__file__).parent.parent / "logs"
+logger = logging.getLogger("robo")
+
+
+def configurar_log():
+    """Envia os registros para a tela e para o arquivo logs/robo.log."""
+    PASTA_LOGS.mkdir(exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)-7s | %(message)s",
+        handlers=[
+            logging.FileHandler(PASTA_LOGS / "robo.log", encoding="utf-8"),
+            logging.StreamHandler(),
+        ],
+    )
+
 
 def analisar(conexao, proposta):
     """Aplica as etapas automáticas a uma proposta e grava o resultado."""
     proposta_id = proposta["id"]
-    print(f"\nProposta {proposta_id} - {proposta['nome']} (R$ {proposta['valor']:.2f})")
+    logger.info("Proposta %d: iniciando análise (R$ %.2f)", proposta_id, proposta["valor"])
 
     # ⚙️ Consultar restritivos/SCR  (FORA da transação: chamada de rede pode demorar)
     try:
@@ -36,7 +56,7 @@ def analisar(conexao, proposta):
         # (⚡) Falha na consulta → backoffice
         with conexao:
             encaminhar_backoffice(conexao, proposta_id, str(erro))
-        print(f"  ⚡ {erro} → encaminhada ao BACKOFFICE")
+        logger.warning("Proposta %d: %s → BACKOFFICE", proposta_id, erro)
         return
 
     # 📜 Calcular comprometimento de renda
@@ -54,30 +74,43 @@ def analisar(conexao, proposta):
         # ◇ Dentro da política de crédito?
         if not dentro_da_politica:
             reprovar(conexao, proposta_id, motivos)
-            print(f"  ✖ REPROVADA automaticamente: {'; '.join(motivos)}")
+            logger.info("Proposta %d: REPROVADA (%s)", proposta_id, "; ".join(motivos))
             return
 
         # 📋 Definir alçada
         alcada = definir_alcada(proposta["valor"])
         encaminhar_alcada(conexao, proposta_id, alcada)
-        print(f"  ✔ Comprometimento {comprometimento:.1f}% → encaminhada para {alcada}")
+        logger.info("Proposta %d: comprometimento %.1f%% → %s", proposta_id, comprometimento, alcada)
 
 
 def main():
+    configurar_log()
+
     if not CAMINHO_BANCO.exists():
-        raise SystemExit(f"Banco não encontrado: {CAMINHO_BANCO}")
+        logger.error("Banco não encontrado: %s", CAMINHO_BANCO)
+        return 1
 
     conexao = sqlite3.connect(CAMINHO_BANCO)
     conexao.row_factory = sqlite3.Row
     conexao.execute("PRAGMA foreign_keys = ON")  # o SQLite só valida as FKs se pedirmos
+
+    erros = 0
     try:
         propostas = buscar_propostas_pendentes(conexao)
-        print(f"{len(propostas)} proposta(s) para analisar")
+        logger.info("Início da execução: %d proposta(s) pendente(s)", len(propostas))
         for proposta in propostas:
-            analisar(conexao, proposta)
+            try:
+                analisar(conexao, proposta)
+            except Exception:
+                # Erro inesperado: registra com detalhes e segue para a próxima
+                erros += 1
+                logger.exception("Proposta %d: erro inesperado", proposta["id"])
     finally:
         conexao.close()
 
+    logger.info("Fim da execução: %d proposta(s), %d erro(s)", len(propostas), erros)
+    return 1 if erros else 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
