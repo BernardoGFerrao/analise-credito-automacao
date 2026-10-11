@@ -9,9 +9,9 @@ Código de saída: 0 = tudo certo; 1 = alguma proposta teve erro inesperado.
 import logging
 import sqlite3
 import sys
-from pathlib import Path
 
 from cliente_api import FalhaNaConsulta, consultar_credito
+from config_log import configurar_log
 from ler_propostas import CAMINHO_BANCO, buscar_propostas_pendentes
 from regras import (
     avaliar_politica,
@@ -27,21 +27,7 @@ from repositorio import (
     reprovar,
 )
 
-PASTA_LOGS = Path(__file__).parent.parent / "logs"
 logger = logging.getLogger("robo")
-
-
-def configurar_log():
-    """Envia os registros para a tela e para o arquivo logs/robo.log."""
-    PASTA_LOGS.mkdir(exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)-7s | %(message)s",
-        handlers=[
-            logging.FileHandler(PASTA_LOGS / "robo.log", encoding="utf-8"),
-            logging.StreamHandler(),
-        ],
-    )
 
 
 def analisar(conexao, proposta):
