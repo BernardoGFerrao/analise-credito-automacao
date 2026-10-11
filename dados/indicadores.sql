@@ -59,3 +59,18 @@ JOIN log_etapa AS l ON l.proposta_id = p.id
 WHERE l.executado_por = 'ROBO_ANALISE_PREVIA'
 GROUP BY p.id, p.data_solicitacao
 ORDER BY p.id;
+
+-- E5: tempo entre o encaminhamento do robô e a decisão
+SELECT
+    a.proposta_id,
+    a.resultado AS alcada,
+    a.data_hora AS encaminhada_em,
+    COALESCE(d.data_hora, 'aguardando') AS decidida_em,
+    ROUND((julianday(COALESCE(d.data_hora, datetime('now', 'localtime')))
+           - julianday(a.data_hora)) * 24 * 60, 1) AS minutos
+FROM log_etapa AS a
+LEFT JOIN log_etapa AS d
+       ON d.proposta_id = a.proposta_id
+      AND d.etapa = 'DECISAO_GERENTE'
+WHERE a.etapa = 'DEFINIR_ALCADA'
+ORDER BY a.proposta_id;
