@@ -78,7 +78,11 @@ flowchart LR
     R --> REG["Regras de negócio"]
     REG --> DB
     PAD["Power Automate Desktop"] -- "executa e lê o código de saída" --> R
-    DB --> G["Gerente / Comitê"]
+    DB --> FX["Fila do gerente (Excel)"]
+    FX --> G["👤 Gerente decide"]
+    G --> DEC["Registro das decisões (Python)"]
+    DEC --> DB
+    DEC --> N["Notificação ao associado"]
 ```
 
 O robô executa as tarefas da raia **Automação** do TO-BE. As regras de negócio ficam isoladas em funções puras, sem acesso a banco ou API, para que possam ser testadas separadamente.
@@ -87,7 +91,22 @@ O robô executa as tarefas da raia **Automação** do TO-BE. As regras de negóc
 
 ![Fluxo no Power Automate Desktop](orquestracao/fluxo_pad.png)
 
-O fluxo executa o robô com o Python do ambiente virtual e decide pelo **código de saída**: `0` exibe a confirmação de sucesso; `1` exibe um alerta com o log da execução. O fluxo em texto está em [`orquestracao/analise_previa_pad.txt`](orquestracao/analise_previa_pad.txt) e pode ser colado no designer do PAD para recriá-lo.
+São dois fluxos, um para cada raia do TO-BE:
+
+| Fluxo | Raia | Tipo | O que faz |
+|---|---|---|---|
+| **Análise prévia** | Automação | Não assistido | Executa o robô e decide pelo **código de saída**: `0` confirma o sucesso; `1` exibe um alerta com o log |
+| **Fila do gerente** | Gerente de Negócios | Assistido | Gera a planilha da fila, abre no Excel, **espera o gerente decidir**, fecha o Excel e registra as decisões |
+
+**Análise prévia:**
+
+![Fluxo da análise prévia](orquestracao/fluxo_pad.png)
+
+**Fila do gerente:**
+
+![Fluxo da fila do gerente](orquestracao/fila_gerente_pad.png)
+
+Os fluxos em texto estão em [`orquestracao/`](orquestracao/) e podem ser colados no designer do PAD para recriá-los.
 
 ---
 
@@ -203,16 +222,21 @@ python robo/analise_previa.py
 │   ├── criar_banco.py     Recria o banco a partir dos scripts
 │   └── consultas.sql      Consultas de indicadores
 ├── orquestracao/
-│   ├── analise_previa_pad.txt  Fluxo do Power Automate Desktop (texto)
-│   └── fluxo_pad.png           Print do fluxo
+│   ├── analise_previa_pad.txt  Fluxo da análise prévia (texto)
+│   ├── fluxo_pad.png           Print do fluxo da análise prévia
+│   ├── fila_gerente_pad.txt    Fluxo da fila do gerente (texto)
+│   └── fila_gerente_pad.png    Print do fluxo da fila do gerente
 ├── robo/
-│   ├── analise_previa.py  Robô: executa a raia Automação do TO-BE
-│   ├── cliente_api.py     Consulta à API com novas tentativas e fallback
-│   ├── ler_propostas.py   Leitura das propostas pendentes
-│   ├── regras.py          Regras de negócio (funções puras)
-│   ├── repositorio.py     Gravação das decisões e do log no banco
-│   └── test_regras.py     Testes das regras
-└── requirements.txt       Dependências (Flask, Requests)
+│   ├── analise_previa.py      Robô: executa a raia Automação do TO-BE
+│   ├── cliente_api.py         Consulta à API com novas tentativas e fallback
+│   ├── config_log.py          Configuração compartilhada dos logs técnicos
+│   ├── exportar_fila.py       Gera a planilha da fila do gerente
+│   ├── ler_propostas.py       Leitura das propostas pendentes
+│   ├── registrar_decisoes.py  Lê as decisões, grava e notifica o associado
+│   ├── regras.py              Regras de negócio (funções puras)
+│   ├── repositorio.py         Gravação das decisões e do log no banco
+│   └── test_regras.py         Testes das regras
+└── requirements.txt       Dependências (Flask, Requests, openpyxl)
 ```
 
 ---
@@ -234,6 +258,11 @@ python robo/analise_previa.py
 - **Erro em uma proposta não para o robô:** erros inesperados são registrados com o traceback, a proposta volta para a fila (graças à transação) e o robô segue para a próxima.
 - **Dois tipos de log:** `log_etapa` (no banco) responde perguntas de negócio e auditoria; `logs/robo.log` (arquivo) serve para monitorar e investigar a execução.
 - **Código de saída:** `0` quando tudo deu certo, `1` quando houve erro inesperado. Falhas previstas, como o encaminhamento ao backoffice, não são erro do robô. É o código que permite ao orquestrador decidir o que fazer.
+- **Validação em camadas:** a decisão do gerente é validada na planilha (lista suspensa), no Python (decisão válida e parecer obrigatório) e no banco (`CHECK`). Nenhuma camada sozinha é confiável.
+- **Fila gerada a partir do banco:** a planilha mostra só o que ainda está com o gerente, e registrar as decisões de novo não grava nada em dobro.
+- **Quem decidiu fica registrado:** o usuário do Windows entra no log como responsável pela decisão (`GERENTE:<usuário>`).
+- **A notificação não expõe detalhes internos:** em caso de reprovação, o associado é orientado a procurar a agência. O motivo fica registrado apenas no log interno.
+- **Arquivos com dados de associados não são versionados:** as pastas `fila/` e `caixa_saida/` ficam fora do Git.
 
 ---
 
@@ -245,9 +274,10 @@ python robo/analise_previa.py
 - [x] Regras de negócio com testes
 - [x] Consulta a uma API simulada, com novas tentativas e fallback para o backoffice
 - [x] Gravação das decisões e log por etapa (rastreabilidade)
-- [ ] Decisão do gerente/comitê e notificação do associado
+- [x] Fila do gerente em Excel, registro da decisão e notificação do associado
 - [x] Logs técnicos e isolamento de erros por proposta
-- [x] Orquestração com Power Automate Desktop: execução do robô e alerta de erro
+- [x] Orquestração com Power Automate Desktop: robô, alerta de erro e fila do gerente
+- [ ] Votação do comitê de crédito
 - [ ] Painel de indicadores
 
 ---
