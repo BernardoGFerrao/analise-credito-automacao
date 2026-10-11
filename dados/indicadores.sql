@@ -46,3 +46,16 @@ WHERE status = 'REPROVADA'
   AND id IN (SELECT DISTINCT proposta_id
              FROM log_etapa
              WHERE executado_por = 'ROBO_ANALISE_PREVIA');
+
+-- E4: tempo entre o pedido e a análise do robô
+SELECT
+    p.id,
+    p.data_solicitacao,
+    MIN(l.data_hora) AS analisada_em,
+    ROUND((julianday(MIN(l.data_hora)) - julianday(p.data_solicitacao)) * 24, 1) AS horas_ate_analise,
+    ROUND( julianday(MIN(l.data_hora)) - julianday(p.data_solicitacao), 1)       AS dias_ate_analise
+FROM proposta AS p
+JOIN log_etapa AS l ON l.proposta_id = p.id
+WHERE l.executado_por = 'ROBO_ANALISE_PREVIA'
+GROUP BY p.id, p.data_solicitacao
+ORDER BY p.id;
