@@ -89,8 +89,6 @@ O robô executa as tarefas da raia **Automação** do TO-BE. As regras de negóc
 
 ### Orquestração com Power Automate Desktop
 
-![Fluxo no Power Automate Desktop](orquestracao/fluxo_pad.png)
-
 São dois fluxos, um para cada raia do TO-BE:
 
 | Fluxo | Raia | Tipo | O que faz |
