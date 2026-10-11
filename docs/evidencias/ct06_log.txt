@@ -1,0 +1,25 @@
+﻿2026-10-11 15:21:15,770 | WARNING | Tentativa 3: serviÃ§o respondeu 503
+2026-10-11 15:21:15,774 | WARNING | Proposta 8: ServiÃ§o indisponÃ­vel apÃ³s 3 tentativas â†’ BACKOFFICE
+2026-10-11 15:21:15,775 | INFO    | Proposta 9: iniciando anÃ¡lise (R$ 1500.00)
+2026-10-11 15:21:15,776 | WARNING | Tentativa 1: serviÃ§o respondeu 503
+2026-10-11 15:21:16,801 | WARNING | Tentativa 2: serviÃ§o respondeu 503
+2026-10-11 15:21:18,817 | WARNING | Tentativa 3: serviÃ§o respondeu 503
+2026-10-11 15:21:18,822 | WARNING | Proposta 9: ServiÃ§o indisponÃ­vel apÃ³s 3 tentativas â†’ BACKOFFICE
+2026-10-11 15:21:18,823 | INFO    | Fim da execuÃ§Ã£o: 3 proposta(s), 0 erro(s)
+2026-10-11 15:25:21,162 | INFO    | InÃ­cio da execuÃ§Ã£o: 3 proposta(s) pendente(s)
+2026-10-11 15:25:21,163 | INFO    | Proposta 7: iniciando anÃ¡lise (R$ 3000.00)
+2026-10-11 15:25:23,209 | WARNING | Tentativa 1: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:26,253 | WARNING | Tentativa 2: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:30,279 | WARNING | Tentativa 3: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:30,283 | WARNING | Proposta 7: ServiÃ§o indisponÃ­vel apÃ³s 3 tentativas â†’ BACKOFFICE
+2026-10-11 15:25:30,284 | INFO    | Proposta 8: iniciando anÃ¡lise (R$ 25000.00)
+2026-10-11 15:25:32,315 | WARNING | Tentativa 1: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:35,345 | WARNING | Tentativa 2: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:39,380 | WARNING | Tentativa 3: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:39,384 | WARNING | Proposta 8: ServiÃ§o indisponÃ­vel apÃ³s 3 tentativas â†’ BACKOFFICE
+2026-10-11 15:25:39,384 | INFO    | Proposta 9: iniciando anÃ¡lise (R$ 1500.00)
+2026-10-11 15:25:41,410 | WARNING | Tentativa 1: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:44,442 | WARNING | Tentativa 2: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:48,473 | WARNING | Tentativa 3: erro de conexÃ£o (ConnectionError)
+2026-10-11 15:25:48,477 | WARNING | Proposta 9: ServiÃ§o indisponÃ­vel apÃ³s 3 tentativas â†’ BACKOFFICE
+2026-10-11 15:25:48,477 | INFO    | Fim da execuÃ§Ã£o: 3 proposta(s), 0 erro(s)

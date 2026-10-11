@@ -1,0 +1,25 @@
+﻿2026-10-11 15:59:32,859 | INFO    | Proposta 7: iniciando anÃ¡lise (R$ 3000.00)
+2026-10-11 15:59:32,877 | INFO    | Proposta 7: comprometimento 18.9% â†’ GERENTE
+2026-10-11 15:59:32,880 | INFO    | Proposta 8: iniciando anÃ¡lise (R$ 25000.00)
+2026-10-11 15:59:32,907 | INFO    | Proposta 8: comprometimento 21.5% â†’ COMITE
+2026-10-11 15:59:32,910 | INFO    | Proposta 9: iniciando anÃ¡lise (R$ 1500.00)
+2026-10-11 15:59:32,937 | INFO    | Proposta 9: REPROVADA (Comprometimento de renda acima de 30%)
+2026-10-11 15:59:32,942 | INFO    | Fim da execuÃ§Ã£o: 3 proposta(s), 0 erro(s)
+2026-10-11 15:59:58,221 | INFO    | InÃ­cio da execuÃ§Ã£o: 0 proposta(s) pendente(s)
+2026-10-11 15:59:58,221 | INFO    | Fim da execuÃ§Ã£o: 0 proposta(s), 0 erro(s)
+2026-10-11 16:02:44,389 | INFO    | InÃ­cio da execuÃ§Ã£o: 3 proposta(s) pendente(s)
+2026-10-11 16:02:44,389 | INFO    | Proposta 7: iniciando anÃ¡lise (R$ 3000.00)
+2026-10-11 16:02:44,411 | ERROR   | Proposta 7: erro inesperado
+Traceback (most recent call last):
+  File "<pasta_projeto>\robo\analise_previa.py", line 90, in main
+    analisar(conexao, proposta)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "<pasta_projeto>\robo\analise_previa.py", line 58, in analisar
+    if proposta_id == 7: raise RuntimeError("Teste")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Teste
+2026-10-11 16:02:44,412 | INFO    | Proposta 8: iniciando anÃ¡lise (R$ 25000.00)
+2026-10-11 16:02:44,415 | INFO    | Proposta 8: comprometimento 21.5% â†’ COMITE
+2026-10-11 16:02:44,419 | INFO    | Proposta 9: iniciando anÃ¡lise (R$ 1500.00)
+2026-10-11 16:02:44,442 | INFO    | Proposta 9: REPROVADA (Comprometimento de renda acima de 30%)
+2026-10-11 16:02:44,446 | INFO    | Fim da execuÃ§Ã£o: 3 proposta(s), 1 erro(s)

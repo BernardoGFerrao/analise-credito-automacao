@@ -1,0 +1,22 @@
+﻿Conferência em 2026-10-11 15:21:25
+
+== Q1 - Onde está cada proposta ==
+id | nome          | valor   | status     | etapa_atual | alcada  | motivo_reprovacao                    
+---+---------------+---------+------------+-------------+---------+--------------------------------------
+5  | Ricardo Alves | 9000.0  | EM_ANALISE | GERENTE     | GERENTE |                                      
+6  | Paulo Mendes  | 6000.0  | REPROVADA  | FINALIZADA  |         | Comprometimento de renda acima de 30%
+7  | Maria Souza   | 3000.0  | EM_ANALISE | BACKOFFICE  |         |                                      
+8  | Ana Lima      | 25000.0 | EM_ANALISE | BACKOFFICE  |         |                                      
+9  | Paulo Mendes  | 1500.0  | EM_ANALISE | BACKOFFICE  |         |                                      
+
+== Q2 - O que aconteceu, passo a passo ==
+proposta_id | etapa            | resultado | detalhe                                | executado_por      
+------------+------------------+-----------+----------------------------------------+--------------------
+7           | CONSULTA_CREDITO | FALHA     | Serviço indisponível após 3 tentativas | ROBO_ANALISE_PREVIA
+8           | CONSULTA_CREDITO | FALHA     | Serviço indisponível após 3 tentativas | ROBO_ANALISE_PREVIA
+9           | CONSULTA_CREDITO | FALHA     | Serviço indisponível após 3 tentativas | ROBO_ANALISE_PREVIA
+
+== Q3 - Quantas consultas de crédito existem (o seed tem 6) ==
+total
+-----
+6    
