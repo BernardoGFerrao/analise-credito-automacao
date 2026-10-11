@@ -1,0 +1,16 @@
+@@CustomName: 'PastaProjeto'
+SET PastaProjeto TO $'''C:\\Users\\be-8f\\OneDrive\\Projetos\\SicrediProjeto'''
+Scripting.RunDOSCommand.RunDOSCommandWithCodePage DOSCommandOrApplication: $'''\"%PastaProjeto%\\.venv\\Scripts\\python.exe\" -X utf8 robo\\exportar_fila.py''' Encoding: System.Encoding.utf_8 WorkingDirectory: PastaProjeto StandardOutput=> CommandOutput StandardError=> CommandErrorOutput ExitCode=> CommandExitCode
+IF CommandExitCode <> 0 THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''ERRO - Fila do gerente''' Message: $'''Não foi possível gerar a fila: %CommandErrorOutput%''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False ButtonPressed=> ButtonPressed
+    EXIT Code: 0
+END
+Excel.LaunchExcel.LaunchAndOpen Path: $'''%PastaProjeto%\\fila\\fila_gerente.xlsx''' Visible: True ReadOnly: False LoadAddInsAndMacros: False UseMachineLocale: False Instance=> ExcelInstance
+Display.ShowMessageDialog.ShowMessage Title: $'''Fila do gerente''' Message: $'''Preencha as colunas Decisão e Parecer e SALVE a planilha (Ctrl+S). NÃO feche o Excel. Depois clique em OK.''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False ButtonPressed=> ButtonPressed2
+Excel.CloseExcel.CloseAndSave Instance: ExcelInstance
+Scripting.RunDOSCommand.RunDOSCommandWithCodePage DOSCommandOrApplication: $'''\"%PastaProjeto%\\.venv\\Scripts\\python.exe\" -X utf8 robo\\registrar_decisoes.py''' Encoding: System.Encoding.utf_8 WorkingDirectory: PastaProjeto StandardOutput=> CommandOutput2 StandardError=> CommandErrorOutput2 ExitCode=> CommandExitCode2
+IF CommandExitCode2 = 0 THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Fila do gerente''' Message: $'''Decisões registradas: %CommandOutput2%''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False ButtonPressed=> ButtonPressed3
+ELSE
+    Display.ShowMessageDialog.ShowMessage Title: $'''ATENÇÃO - Fila do gerente''' Message: $'''Há linhas que não foram registradas. %CommandOutput2% Detalhes: %CommandErrorOutput2%''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: False ButtonPressed=> ButtonPressed4
+END
