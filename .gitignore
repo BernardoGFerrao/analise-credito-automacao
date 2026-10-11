@@ -12,6 +12,9 @@ __pycache__/
 # Windows
 desktop.ini
 
-
 # Logs técnicos do robô
 logs/
+
+# Arquivos gerados com dados de associados
+fila/
+caixa_saida/
